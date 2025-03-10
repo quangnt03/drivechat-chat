@@ -1,6 +1,5 @@
-from sqlalchemy.orm import Session
 from services.user import UserService
-from services.item_service import ItemService
+from services.item import ItemService
 from services.conversation import ConversationService
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
