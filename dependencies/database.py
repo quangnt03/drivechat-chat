@@ -1,11 +1,14 @@
-from services.user import UserService
-from services.item import ItemService
-from services.conversation import ConversationService
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 from models.base import Base
 from sqlalchemy.sql import text
 import logging
+from services.user import UserService
+from services.item import ItemService
+from services.conversation import ConversationService
+from services.message import MessageService
+from services.chat import ChatService
+from services.embedding import EmbeddingService
 
 class DatabaseService:
     def __init__(self, db_url: str):
@@ -45,3 +48,12 @@ class DatabaseService:
 
     def get_conversation_service(self):
         return ConversationService(self.db)
+
+    def get_message_service(self):
+        return MessageService(self.db)
+
+    def get_chat_service(self):
+        return ChatService(self.db)
+
+    def get_embedding_service(self):
+        return EmbeddingService(self.db)

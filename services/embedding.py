@@ -1,11 +1,21 @@
-from typing import Dict, List
-from llama_index.core import SimpleDirectoryReader
+from typing import List, Optional
 from llama_index.embeddings.openai import OpenAIEmbedding
 from llama_index.core.text_splitter import SentenceSplitter
+from llama_index.core.schema import TextNode
+from sqlalchemy.orm import Session
 import logging
+import uuid
+from models.embedding import Embedding
+from models.item import Item
+from services.item import ItemService
 
 class EmbeddingService:
-    def __init__(self, openai_api_key: str, chunk_size: int = 1000, chunk_overlap: int = 200):
+    def __init__(self, 
+        db: Session, 
+        openai_api_key: Optional[str] = None, 
+        chunk_size: int = 1000, 
+        chunk_overlap: int = 200
+    ):
         """
         Initialize the embedding service.
         
@@ -15,55 +25,50 @@ class EmbeddingService:
             chunk_overlap (int): Number of overlapping tokens between chunks
         """
         self.logger = logging.getLogger(self.__class__.__name__)
-        self.embed_model = OpenAIEmbedding(api_key=openai_api_key)
+        self.embed_model = OpenAIEmbedding(api_key=openai_api_key) if openai_api_key else None 
         self.text_splitter = SentenceSplitter(
             chunk_size=chunk_size,
             chunk_overlap=chunk_overlap
         )
-
-    async def process_document(self, file_path: str) -> List[Dict]:
-        """
-        Process a document: load, split, and embed.
+        self.db = db
+        self.item_service = ItemService(db)
         
-        Args:
-            file_path (str): Path to the document
-        
-        Returns:
-            List[Dict]: List of chunks with their embeddings
+    def get_conversation_embeddings(self, conversation_id: uuid.UUID) -> List[Embedding]:
         """
-        try:
-            # 1. Load document
-            loader = SimpleDirectoryReader(file_path)
-            documents = loader.load_data()
-            nodes = self.text_splitter.get_nodes_from_documents(documents)
-            
-            # 2. Generate embeddings for each chunk
-            for node in nodes:
-                node.embedding = await self.embed_model.aget_text_embedding(
-                    node.get_content()
+        Get all embeddings for a conversation.
+        """
+        return self.db \
+            .query(Embedding) \
+            .filter(
+                Embedding.conversation_id == conversation_id,
+                Embedding.item.has(Item.active)
+            ).all()
+    
+    def get_embedding(self, embedding_id: uuid.UUID) -> Embedding:
+        """
+        Get an embedding by ID.
+        """
+        return self.db.query(Embedding).get({'id': embedding_id})
+    
+    def parse_embeddings_to_nodes(self, embeddings: List[Embedding]) -> List[TextNode]:
+        """
+        Parse embeddings to nodes.
+        """
+        nodes: List[TextNode] = []
+        item = self.item_service.get_item_by_id_only(embeddings[0].item_id)
+        for embedding in embeddings:
+            nodes.append(
+                TextNode(
+                    id=embedding.id,
+                    text=embedding.chunk_text,
+                    embedding=embedding.embedding,
+                    metadata={
+                        "id": str(embedding.id),
+                        "item_id": str(item.id),
+                        "item_uri": item.uri,
+                        "item_name": item.file_name,
+                        'page': embedding.page,
+                    }
                 )
-                
-            return nodes
-            
-        except Exception as e:
-            raise Exception(f"Failed to process document: {str(e)}")
-
-    def metadata_handler(self, metadata: Dict, owner: str, conversation_id: str) -> Dict:
-        """
-        Extract and format metadata from Google Drive file.
-        
-        Args:
-            metadata (Dict): Raw metadata from Google Drive
-            
-        Returns:
-            Dict: Formatted metadata
-        """
-        return {
-            "file_name": metadata.get('name'),
-            "id": metadata.get('id'),
-            "uri": metadata.get('webViewLink'),
-            "mime_type": metadata.get('mimeType'),
-            "owner": owner,
-            "conversation_id": conversation_id
-        }
-        
+            )
+        return nodes

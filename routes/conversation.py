@@ -1,13 +1,15 @@
 import os 
 from fastapi import APIRouter, Depends, HTTPException
 from pydantic import UUID4
+from dotenv import load_dotenv, find_dotenv
 from dependencies.security import validate_token
 from dependencies.database import DatabaseService, UserService, ConversationService, ItemService
 from schemas.conversation import ConversationCreate
 
+load_dotenv(find_dotenv())
+
 router = APIRouter(prefix='/api/v1/conversation', tags=['Conversations'])
 db_service = DatabaseService(os.getenv('DATABASE_URL'))
-
 
 @router.post("")
 def create_conversation(

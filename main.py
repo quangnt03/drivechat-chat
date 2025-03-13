@@ -1,7 +1,10 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from routes import conversation
+from dotenv import load_dotenv, find_dotenv
+from routes import conversation, chat
 
+# Load environment variables from.env file
+load_dotenv(find_dotenv())
 
 # Initialize FastAPI app
 app = FastAPI(
@@ -21,6 +24,7 @@ app.add_middleware(
 
 # Include routers
 app.include_router(conversation.router)
+app.include_router(chat.router)
 
 # Health check endpoint
 @app.get("/health")

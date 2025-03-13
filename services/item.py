@@ -10,6 +10,13 @@ class ItemService:
     def __init__(self, session: Session):
         self.session = session
 
+    def get_item_by_id_only(self, item_id: str) -> Optional[Item]:
+        """Get a single item by ID"""
+        filters = [Item.id == item_id]
+        query = self.session.query(Item).filter(*filters)
+        item = query.first()
+        return item
+
     def get_item_by_id(self, owner: User, item_id: str) -> Optional[Item]:
         """Get a single item by ID"""
         filters = [Item.id == item_id, Item.owner_id == owner.id]

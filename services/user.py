@@ -2,6 +2,8 @@ from sqlalchemy.orm import Session
 from models.user import User
 from typing import Optional
 import logging
+from sqlalchemy.dialects.postgresql import UUID
+
 class UserService:
     def __init__(self, db: Session):
         self.db = db
@@ -18,3 +20,6 @@ class UserService:
         self.db.expunge(user)
         return user
     
+    def get_user_by_id(self, user_id: UUID) -> Optional[User]:
+        return self.db.query(User).filter(User.id == user_id).first()
+
