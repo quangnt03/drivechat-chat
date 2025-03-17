@@ -12,7 +12,7 @@ from services.user import UserService
 from schemas.chat import ChatRequest
 
 router = APIRouter(
-    prefix="/chat",
+    prefix="/api/v1/chat",
     tags=["chat"]
 )
 db_service = DatabaseService(os.getenv('DATABASE_URL'))
