@@ -37,7 +37,8 @@ def get_all_conversation(
     email = user['UserAttributes'][0]['Value']
     user = user_service.get_user_by_email(email)
     if not user:
-        raise HTTPException(status_code=404, detail="User not found")
+        user = user_service.create_user(email)
+    
     if title:
         conversation = conversation_service.get_user_conversations_by_title(user.id, title)
         if not conversation:
@@ -58,6 +59,7 @@ def get_conversation(
     user = user_service.get_user_by_email(email)
     if not user:
         raise HTTPException(status_code=404, detail="User not found")
+    
     conversation = conversation_service.get_conversation(conversation_id, user.id)
     if not conversation:
         raise HTTPException(status_code=404, detail="Conversation not found")
