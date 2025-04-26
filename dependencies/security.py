@@ -11,7 +11,6 @@ def validate_token(http_authorization_credentials=Depends(reusable_oauth2)) -> s
     Decode JWT token to get username => return username
     """
     client = boto3.client('cognito-idp', region_name='us-east-1')
-    print(http_authorization_credentials)
     try:
         user = client.get_user(
             AccessToken=http_authorization_credentials.credentials

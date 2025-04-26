@@ -74,7 +74,6 @@ class ChatService:
             chat_store=chat_store,
             chat_store_key=str(conversation.id) 
         )
-        print(chat_mem)
         chat_engine = self.vector_store.as_chat_engine(
             llm=self.llm,
             chat_history=messages,
